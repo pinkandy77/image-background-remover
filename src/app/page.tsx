@@ -11,8 +11,9 @@ export default function Home() {
   const dropRef = useRef<HTMLDivElement>(null);
 
   const handleFile = (f: File) => {
-    if (!f.type.startsWith("image/")) {
-      setError("请上传图片文件");
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/bmp"];
+    if (!allowedTypes.includes(f.type)) {
+      setError("仅支持 JPG, PNG, WebP, BMP 格式");
       return;
     }
     setFile(f);
@@ -36,18 +37,16 @@ export default function Home() {
 
     try {
       const formData = new FormData();
-      formData.append("image_file", file);
-      formData.append("size", "auto");
+      formData.append("image", file);
 
-      const res = await fetch("https://api.remove.bg/v1.0/removebg", {
+      const res = await fetch("/api/remove-bg", {
         method: "POST",
-        headers: { "X-Api-Key": "Rhc2ubvjW4aT78ypzRBw5jSE" },
         body: formData,
       });
 
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text);
+        const data = await res.json();
+        throw new Error(data.error || "处理失败");
       }
 
       const blob = await res.blob();
@@ -77,12 +76,12 @@ export default function Home() {
           <input
             id="file"
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/bmp"
             className="hidden"
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
           />
           <div className="text-4xl mb-2">📁</div>
-          <p className="text-gray-600">点击或拖拽上传图片</p>
+          <p className="text-gray-600">点击或拖拽上传图片（JPG/PNG/WebP/BMP）</p>
         </div>
 
         {preview && (
